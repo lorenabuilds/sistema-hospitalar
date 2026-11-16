@@ -209,3 +209,9 @@ Uma consulta agendada deve ser confirmada antes do atendimento, e somente consul
 
 ### RN.28 — Cobertura do convênio
 A verificação de cobertura deve ser realizada para pacientes com convênio ativo antes da confirmação da consulta.
+
+### RN.29 — Alerta e tratamento de incompatibilidade de alergia na prescrição
+O sistema deve impedir o registro definitivo de prescrições de medicamentos que sejam incompatíveis com as alergias cadastradas no prontuário do paciente. Ao identificar a incompatibilidade, o sistema deve emitir um alerta ao médico responsável e permitir que ele adote uma das seguintes ações: substituir o medicamento por outro compatível ou descartar a prescrição do item, não efetuando o seu registro.
+
+### RN.30 — Prescrição de múltiplos medicamentos no mesmo atendimento
+O sistema deve permitir que o médico inclua múltiplos medicamentos em uma mesma prescrição, durante o mesmo atendimento ao paciente, desde que cada medicamento seja submetido individualmente às verificações de segurança e compatibilidade (incluindo a verificação de alergias prevista na RN.29) antes de seu registro. Todos os medicamentos prescritos devem ser vinculados ao mesmo atendimento e ao prontuário do paciente.
