@@ -6,6 +6,7 @@ internacoes = []
 prescricoes = []
 prontuarios = []
 exames = []
+estoque = []
 
 logado = None
 
@@ -441,13 +442,171 @@ def dar_alta():
             return
     print(">> Internação não encontrada.")
 
+def converter_data(data):
+    partes = data.split("/")
+    if len(partes) != 3:
+        return None
+    try:
+        dia = int(partes[0])
+        mes = int(partes[1])
+        ano = int(partes[2])
+    except ValueError:
+        return None
+    return (ano, mes, dia)
+
+def dias_para_vencer(ano, mes, dia):
+    import datetime
+    hoje = datetime.date.today()
+    validade = datetime.date(ano, mes, dia)
+    return (validade - hoje).days
+
+def cadastrar_medicamento():
+    print("\n--- CADASTRAR MEDICAMENTO ---")
+    nome = input("Nome do medicamento: ").strip()
+    lote = input("Lote: ").strip()
+    quantidade = input("Quantidade: ").strip()
+    validade = input("Validade (DD/MM/AAAA): ").strip()
+    minimo = input("Estoque mínimo: ").strip()
+
+    if nome == "" or lote == "" or quantidade == "" or validade == "" or minimo == "":
+        print(">> Preencha todos os campos!")
+        return
+
+    if converter_data(validade) is None:
+        print(">> Data inválida! Use DD/MM/AAAA.")
+        return
+
+    try:
+        quantidade = int(quantidade)
+        minimo = int(minimo)
+    except ValueError:
+        print(">> Quantidade e mínimo devem ser números!")
+        return
+
+    estoque.append({
+        "id": len(estoque) + 1,
+        "nome": nome,
+        "lote": lote,
+        "quantidade": quantidade,
+        "validade": validade,
+        "minimo": minimo
+    })
+    print(">> Medicamento cadastrado! Código:", len(estoque))
+
+def entrada_estoque():
+    print("\n--- ENTRADA DE ESTOQUE ---")
+    if len(estoque) == 0:
+        print(">> Nenhum medicamento cadastrado.")
+        return
+    listar_estoque()
+    codigo = input("Código do medicamento: ").strip()
+    for m in estoque:
+        if str(m["id"]) == codigo:
+            qtd = input("Quantidade a adicionar: ").strip()
+            try:
+                qtd = int(qtd)
+            except ValueError:
+                print(">> Quantidade inválida!")
+                return
+            if qtd <= 0:
+                print(">> A quantidade deve ser positiva!")
+                return
+            m["quantidade"] = m["quantidade"] + qtd
+            print(">> Entrada registrada! Nova quantidade:", m["quantidade"])
+            return
+    print(">> Medicamento não encontrado.")
+
+def saida_estoque():
+    print("\n--- SAÍDA DE ESTOQUE (DISPENSAÇÃO) ---")
+    if len(estoque) == 0:
+        print(">> Nenhum medicamento cadastrado.")
+        return
+    listar_estoque()
+    codigo = input("Código do medicamento: ").strip()
+    for m in estoque:
+        if str(m["id"]) == codigo:
+            # RN.19 - bloqueia vencido
+            data = converter_data(m["validade"])
+            if data is not None:
+                dias = dias_para_vencer(data[0], data[1], data[2])
+                if dias < 0:
+                    print(">> BLOQUEADO: medicamento vencido em", m["validade"], "!")
+                    return
+            qtd = input("Quantidade a dispensar: ").strip()
+            try:
+                qtd = int(qtd)
+            except ValueError:
+                print(">> Quantidade inválida!")
+                return
+            if qtd <= 0:
+                print(">> A quantidade deve ser positiva!")
+                return
+            if qtd > m["quantidade"]:
+                print(">> Estoque insuficiente! Disponível:", m["quantidade"])
+                return
+            m["quantidade"] = m["quantidade"] - qtd
+            print(">> Saída registrada! Restante:", m["quantidade"])
+            if m["quantidade"] < m["minimo"]:
+                print(">> ALERTA: estoque abaixo do mínimo (", m["minimo"], ")!")
+            return
+    print(">> Medicamento não encontrado.")
+
+def listar_estoque():
+    print("\n--- ESTOQUE DE MEDICAMENTOS ---")
+    if len(estoque) == 0:
+        print(">> Nenhum medicamento cadastrado.")
+        return
+    for m in estoque:
+        data = converter_data(m["validade"])
+        status = ""
+        if data is not None:
+            dias = dias_para_vencer(data[0], data[1], data[2])
+            if dias < 0:
+                status = "VENCIDO"
+            elif dias <= 30:
+                status = "VENCE EM " + str(dias) + " DIAS"
+            elif m["quantidade"] < m["minimo"]:
+                status = "ESTOQUE BAIXO"
+            else:
+                status = "OK"
+        else:
+            status = "VALIDADE INVÁLIDA"
+        print("Código:", m["id"], "|", m["nome"], "| Lote:", m["lote"])
+        print("  Quantidade:", m["quantidade"], "| Mínimo:", m["minimo"], "| Validade:", m["validade"])
+        print("  Status:", status)
+        print("")
+
+def verificar_alertas():
+    print("\n=== ALERTAS DE ESTOQUE ===")
+    encontrou = False
+    for m in estoque:
+        data = converter_data(m["validade"])
+        if data is not None:
+            dias = dias_para_vencer(data[0], data[1], data[2])
+            if dias < 0:
+                print(">> VENCIDO:", m["nome"], "(lote", m["lote"], ", validade", m["validade"], ")")
+                encontrou = True
+            elif dias <= 30:
+                print(">> VENCE EM", dias, "DIAS:", m["nome"], "(lote", m["lote"], ")")
+                encontrou = True
+        if m["quantidade"] < m["minimo"]:
+            print(">> ESTOQUE BAIXO:", m["nome"], "(qtd", m["quantidade"], "de mínimo", m["minimo"], ")")
+            encontrou = True
+    if not encontrou:
+        print(">> Nenhum alerta. Estoque em ordem.")
+
 def menu_administrador():
     while True:
+        verificar_alertas()
         print("\n=== MENU ADMINISTRADOR ===")
         print("1 - Cadastrar usuário")
         print("2 - Listar usuários")
         print("3 - Cadastrar leito")
         print("4 - Listar leitos")
+        print("5 - Cadastrar medicamento")
+        print("6 - Listar estoque")
+        print("7 - Entrada de estoque")
+        print("8 - Saída de estoque")
         print("0 - Sair")
         op = input("Opção: ").strip()
         if op == "1":
@@ -460,6 +619,14 @@ def menu_administrador():
             cadastrar_leito()
         elif op == "4":
             listar_leitos()
+        elif op == "5":
+            cadastrar_medicamento()
+        elif op == "6":
+            listar_estoque()
+        elif op == "7":
+            entrada_estoque()
+        elif op == "8":
+            saida_estoque()
         elif op == "0":
             print(">> Você saiu da conta.")
             break
@@ -508,6 +675,7 @@ def menu_medico():
         print("8 - Solicitar exame")
         print("9 - Registrar resultado de exame")
         print("10 - Listar exames")
+        print("11 - Verificar alertas de estoque")
         print("0 - Sair")
         op = input("Opção: ").strip()
         if op == "1":
@@ -530,6 +698,8 @@ def menu_medico():
             registrar_resultado_exame()
         elif op == "10":
             listar_exames()
+        elif op == "11":
+            verificar_alertas()
         elif op == "0":
             print(">> Você saiu da conta.")
             break
@@ -545,6 +715,7 @@ def menu_enfermeiro():
         print("4 - Dar alta")
         print("5 - Ver prontuário")
         print("6 - Listar exames")
+        print("7 - Verificar alertas de estoque")
         print("0 - Sair")
         op = input("Opção: ").strip()
         if op == "1":
@@ -559,6 +730,8 @@ def menu_enfermeiro():
             ver_prontuario()
         elif op == "6":
             listar_exames()
+        elif op == "7":
+            verificar_alertas()
         elif op == "0":
             print(">> Você saiu da conta.")
             break
