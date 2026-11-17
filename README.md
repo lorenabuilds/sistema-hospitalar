@@ -2,17 +2,12 @@
 
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 ![Versão](https://img.shields.io/badge/vers%C3%A3o-0.1.0-blue)
-![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
 
-Sistema para gerenciar o dia a dia de um hospital: cadastro de pacientes, agendamento de consultas, prontuário eletrônico, exames, internações, leitos e estoque de medicamentos, com controle de acesso por perfil de usuário.
+Sistema para gerenciar o dia a dia de um hospital: cadastro de pacientes, agendamento de consultas, prescrições com alerta de alergia, leitos e internações, com controle de acesso por perfil de usuário.
 
 > Trabalho prático da disciplina **Análise e Projeto de Sistemas**.
-
-<!-- Substitua pelo GIF ou print da aplicação funcionando -->
-![Demonstração do sistema](docs/imagens/demo.gif)
 
 ---
 
@@ -20,45 +15,54 @@ Sistema para gerenciar o dia a dia de um hospital: cadastro de pacientes, agenda
 
 ### Problema que o sistema resolve
 
-Em muitos hospitais, informações de pacientes, agendas, prontuários e estoque ficam espalhadas em planilhas, papéis e sistemas que não conversam entre si. Isso causa conflitos de horário, perda de histórico clínico, falta de medicamentos e risco para o paciente, como a prescrição de um remédio ao qual ele é alérgico.
+Em muitos hospitais, informações de pacientes, agendas e prontuários ficam espalhadas em planilhas, papéis e sistemas que não conversam entre si. Isso causa conflitos de horário, perda de histórico clínico e risco para o paciente, como a prescrição de um remédio ao qual ele é alérgico.
 
 Este sistema centraliza essas informações e aplica as regras de negócio automaticamente, reduzindo erros e agilizando o atendimento.
 
-### Principais funcionalidades
+### Funcionalidades implementadas
 
-- [ ] Cadastro e consulta de pacientes, com validação de CPF duplicado
-- [ ] Autenticação de usuários e controle de acesso por perfil (recepcionista, médico, enfermeiro e administrador)
-- [ ] Agendamento, alteração, confirmação e cancelamento de consultas, com bloqueio de conflito de horário
-- [ ] Atendimento de emergência, fora das regras de horário comum
-- [ ] Prontuário eletrônico com histórico de atendimentos
-- [ ] Registro de atendimento e prescrição de medicamentos, com **alerta de alergia**
+- [x] Cadastro e listagem de pacientes (nome, telefone e alergias)
+- [x] Cadastro de usuários com perfis (administrador, médico, enfermeiro e recepcionista)
+- [x] Autenticação por login e senha, com menus distintos por perfil
+- [x] Agendamento de consultas com validação de horário (07:00–18:00) e bloqueio de conflito
+- [x] Listagem e cancelamento de consultas (histórico mantido)
+- [x] Prescrição de medicamentos com **alerta de alergia** (prescrição bloqueada em caso de incompatibilidade)
+- [x] Cadastro e listagem de leitos
+- [x] Internação de pacientes em leitos disponíveis
+- [x] Alta hospitalar com liberação do leito
+
+### Funcionalidades previstas (ainda não implementadas)
+
+- [ ] Prontuário eletrônico completo
 - [ ] Solicitação de exames e registro de resultados
-- [ ] Gerenciamento de leitos e internações, com histórico de transferências
-- [ ] Controle de estoque de medicamentos, com lotes, validade e estoque mínimo
-- [ ] Verificação de cobertura de convênio antes da confirmação da consulta
+- [ ] Transferência de pacientes entre setores
+- [ ] Controle de estoque de medicamentos (lotes, validade, estoque mínimo)
+- [ ] Verificação de cobertura de convênio
 - [ ] Relatórios gerenciais e indicadores hospitalares
-- [ ] Registro de atividades dos usuários e envio de notificações e alertas
+- [ ] Registro de atividades (log de auditoria)
+- [ ] Notificações e alertas automáticos
+- [ ] Atendimento de emergência (fora do horário comum)
 
 > Marque cada item com `[x]` conforme for sendo implementado.
 
 ### Escopo
 
-**O sistema faz:** gestão de pacientes, consultas, prontuários, exames, internações, leitos, estoque de medicamentos, usuários e permissões, relatórios e notificações.
+**O sistema faz (implementado):** cadastro de pacientes, autenticação por perfil, agendamento e cancelamento de consultas, prescrição com alerta de alergia, cadastro de leitos, internação e alta.
 
-**O sistema não faz:** faturamento financeiro completo, folha de pagamento, telemedicina e integração real com laudos de imagem.
+**O sistema não faz:** faturamento financeiro, folha de pagamento, telemedicina, armazenamento de imagens de exames e integração real com sistemas de convênio.
 
 ---
 
 ## 🛠️ Tecnologias
 
-| Camada | Tecnologia |
+| Finalidade | Tecnologia |
 | --- | --- |
-| Linguagem | Python 3.11+ |
-| API | FastAPI |
-| Banco de dados | SQLite |
-| Documentação da API | Swagger UI (gerada automaticamente em `/docs`) |
-| Diagramas | draw.io e Mermaid |
-| Versionamento | Git e GitHub |
+| Linguagem | **Python 3.9+** (puro, sem bibliotecas ou frameworks externos) |
+| Diagramas (casos de uso) | draw.io |
+| Controle de versão | Git |
+| Hospedagem do repositório | GitHub |
+
+> O projeto foi desenvolvido utilizando apenas recursos nativos da linguagem Python, sem dependências externas.
 
 ---
 
@@ -66,24 +70,27 @@ Este sistema centraliza essas informações e aplica as regras de negócio autom
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/<usuario>/sistema-hospitalar.git
+git clone https://github.com/lorenabuilds/sistema-hospitalar.git
 cd sistema-hospitalar
 
-# 2. Crie e ative o ambiente virtual
-python -m venv venv
-source venv/bin/activate        # Linux/macOS
-venv\Scripts\activate           # Windows
-
-# 3. Instale as dependências
-pip install -r requirements.txt
-
-# 4. Inicie a aplicação
-uvicorn src.main:app --reload
+# 2. Execute a aplicação
+python "src/Sistema Hospitalar.py"
 ```
 
-Depois, acesse **http://localhost:8000/docs** para testar as funcionalidades pela interface interativa.
+> Certifique-se de ter o **Python 3.9 ou superior** instalado. Não é necessário instalar bibliotecas adicionais.
 
-> Ajuste os comandos conforme a estrutura final do código.
+### Primeiro acesso
+
+Na primeira execução, o sistema solicita o cadastro do **primeiro usuário**, que será automaticamente definido como **administrador**. A partir daí, o login é feito com login e senha cadastrados.
+
+### Perfis e menus
+
+| Perfil | Opções disponíveis |
+| --- | --- |
+| **Administrador** | Cadastrar/listar usuários; cadastrar/listar leitos |
+| **Recepcionista** | Cadastrar/listar pacientes; agendar/listar/cancelar consultas |
+| **Médico** | Listar pacientes e consultas; agendar consulta; prescrever medicamentos; listar prescrições |
+| **Enfermeiro** | Listar pacientes e leitos; internar paciente; dar alta |
 
 ---
 
@@ -91,22 +98,24 @@ Depois, acesse **http://localhost:8000/docs** para testar as funcionalidades pel
 
 ```
 sistema-hospitalar/
-├── README.md
 ├── docs/
-│   ├── requisitos/
 │   ├── diagramas/
-│   ├── imagens/
-│   └── documentacao.pdf
+│   ├── documentacao.pdf/
+│   └── requisitos/
 └── src/
+    ├── README.md
+    └── Sistema Hospitalar.py
 ```
 
 ---
 
 ## 📄 Documentação
 
+- Documento completo (PDF/DOCX): `docs/documentacao.pdf`
+- Diagrama de casos de uso: `docs/diagramas/`
 - Requisitos funcionais, não funcionais e regras de negócio: `docs/requisitos/`
-- Diagrama de casos de uso e diagrama de classes: `docs/diagramas/`
-- Documento completo (PDF): `docs/documentacao.pdf`
+
+> O documento de análise e projeto descreve o sistema completo (RF.01–RF.15, RNF.01–RNF.09, RN.01–RN.30). A implementação atual cobre um subconjunto desses requisitos, conforme listado na seção de funcionalidades.
 
 ---
 
@@ -116,10 +125,7 @@ O projeto usa **Conventional Commits**:
 
 ```
 feat: adiciona cadastro de paciente
-fix: corrige validação de CPF duplicado
-docs: adiciona diagrama de classes ao repositório
-refactor: separa regras de agendamento em classe própria
-test: adiciona testes do agendamento de consultas
+docs: adiciona diagrama de casos de uso ao repositório
 chore: configura ambiente do projeto
 ```
 
@@ -129,11 +135,17 @@ chore: configura ambiente do projeto
 
 | Nome | GitHub |
 | --- | --- |
-| [Nome da integrante 1] | [@usuario1](https://github.com/usuario1) |
-| [Nome da integrante 2] | [@usuario2](https://github.com/usuario2) |
+| Lorena A. S. de Almeida | [@lorenabuilds](https://github.com/lorenabuilds) |
+| Débora Cristina Silva Melo | [@deborac-smelo](https://github.com/deborac-smelo) |
 
 **Disciplina:** Análise e Projeto de Sistemas
 **Data:** novembro de 2026
+
+---
+
+## 🔗 Repositório
+
+[github.com/lorenabuilds/sistema-hospitalar](https://github.com/lorenabuilds/sistema-hospitalar)
 
 ---
 
