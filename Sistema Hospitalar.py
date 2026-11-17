@@ -4,9 +4,10 @@ consultas = []
 leitos = []
 internacoes = []
 prescricoes = []
+prontuarios = []
+exames = []
 
 logado = None
-
 
 def cadastrar_usuario():
     print("\n--- CADASTRAR USUÁRIO ---")
@@ -44,7 +45,6 @@ def cadastrar_usuario():
     usuarios.append({"nome": nome, "login": login, "senha": senha, "perfil": perfil})
     print(">> Usuário cadastrado com sucesso!")
 
-
 def fazer_login():
     global logado
     print("\n--- LOGIN ---")
@@ -58,7 +58,6 @@ def fazer_login():
             return
     print(">> Login ou senha incorretos!")
 
-
 def abrir_menu_do_perfil(perfil):
     if perfil == "administrador":
         menu_administrador()
@@ -69,18 +68,23 @@ def abrir_menu_do_perfil(perfil):
     else:
         menu_recepcionista()
 
-
 def cadastrar_paciente():
     print("\n--- CADASTRAR PACIENTE ---")
     nome = input("Nome completo: ").strip()
     telefone = input("Telefone: ").strip()
     alergias = input("Alergias (Enter se não tiver): ").strip()
+    convenio = input("Convênio (Enter se não tiver): ").strip()
     if nome == "" or telefone == "":
         print(">> Nome e telefone são obrigatórios!")
         return
-    pacientes.append({"id": len(pacientes) + 1, "nome": nome, "telefone": telefone, "alergias": alergias})
+    pacientes.append({
+        "id": len(pacientes) + 1,
+        "nome": nome,
+        "telefone": telefone,
+        "alergias": alergias,
+        "convenio": convenio
+    })
     print(">> Paciente cadastrado! Código:", len(pacientes))
-
 
 def listar_pacientes():
     print("\n--- LISTA DE PACIENTES ---")
@@ -92,15 +96,14 @@ def listar_pacientes():
         print("  Nome:", p["nome"])
         print("  Telefone:", p["telefone"])
         print("  Alergias:", p["alergias"] if p["alergias"] != "" else "nenhuma")
+        print("  Convênio:", p["convenio"] if p["convenio"] != "" else "particular")
         print("")
-
 
 def achar_paciente(codigo):
     for p in pacientes:
         if str(p["id"]) == str(codigo):
             return p
     return None
-
 
 def agendar_consulta():
     print("\n--- AGENDAR CONSULTA ---")
@@ -113,18 +116,42 @@ def agendar_consulta():
     if paciente is None:
         print(">> Paciente não encontrado.")
         return
+    medicos = []
+    for u in usuarios:
+        if u["perfil"] == "medico":
+            medicos.append(u)
+    if len(medicos) == 0:
+        print(">> Nenhum médico cadastrado.")
+        return
+    print("\nMédicos disponíveis:")
+    for m in medicos:
+        print("  ", m["nome"])
+    nome_medico = input("Nome do médico: ").strip()
+    medico = None
+    for m in medicos:
+        if m["nome"] == nome_medico:
+            medico = m
+    if medico is None:
+        print(">> Médico não encontrado.")
+        return
     data = input("Data (ex: 20/11/2026): ").strip()
     hora = input("Hora (07:00 até 18:00, ex: 09:00): ").strip()
     if hora < "07:00" or hora >= "18:00":
         print(">> Fora do horário de atendimento (07:00 às 18:00).")
         return
     for c in consultas:
-        if c["data"] == data and c["hora"] == hora:
-            print(">> Já existe consulta nesse horário!")
+        if c["medico"] == medico["nome"] and c["data"] == data and c["hora"] == hora and c["status"] != "cancelada":
+            print(">> Esse médico já tem consulta nesse horário!")
             return
-    consultas.append({"id": len(consultas) + 1, "paciente": paciente["nome"], "data": data, "hora": hora, "status": "agendada"})
-    print(">> Consulta agendada com sucesso! Código:", len(consultas))
-
+    consultas.append({
+        "id": len(consultas) + 1,
+        "paciente": paciente["nome"],
+        "medico": medico["nome"],
+        "data": data,
+        "hora": hora,
+        "status": "agendada"
+    })
+    print(">> Consulta agendada! Código:", len(consultas))
 
 def listar_consultas():
     print("\n--- LISTA DE CONSULTAS ---")
@@ -134,10 +161,37 @@ def listar_consultas():
     for c in consultas:
         print("Código:", c["id"])
         print("  Paciente:", c["paciente"])
+        print("  Médico:", c["medico"])
         print("  Data:", c["data"], "às", c["hora"])
         print("  Status:", c["status"])
         print("")
 
+def confirmar_consulta():
+    print("\n--- CONFIRMAR CONSULTA ---")
+    agendadas = []
+    for c in consultas:
+        if c["status"] == "agendada":
+            agendadas.append(c)
+    if len(agendadas) == 0:
+        print(">> Nenhuma consulta agendada.")
+        return
+    for c in agendadas:
+        print("Código:", c["id"], "|", c["paciente"], "|", c["medico"], "|", c["data"], c["hora"])
+    codigo = input("Código da consulta: ").strip()
+    for c in agendadas:
+        if str(c["id"]) == codigo:
+            paciente = None
+            for p in pacientes:
+                if p["nome"] == c["paciente"]:
+                    paciente = p
+            if paciente is not None and paciente["convenio"] != "":
+                print(">> Verificando cobertura do convênio", paciente["convenio"], "... OK")
+            else:
+                print(">> Paciente particular (sem convênio).")
+            c["status"] = "confirmada"
+            print(">> Consulta confirmada!")
+            return
+    print(">> Consulta não encontrada.")
 
 def cancelar_consulta():
     print("\n--- CANCELAR CONSULTA ---")
@@ -152,9 +206,39 @@ def cancelar_consulta():
             return
     print(">> Consulta não encontrada.")
 
+def registrar_atendimento():
+    print("\n--- REGISTRAR ATENDIMENTO ---")
+    confirmadas = []
+    for c in consultas:
+        if c["status"] == "confirmada":
+            confirmadas.append(c)
+    if len(confirmadas) == 0:
+        print(">> Nenhuma consulta confirmada.")
+        return
+    for c in confirmadas:
+        print("Código:", c["id"], "|", c["paciente"], "|", c["medico"], "|", c["data"], c["hora"])
+    codigo = input("Código da consulta: ").strip()
+    for c in confirmadas:
+        if str(c["id"]) == codigo:
+            if c["medico"] != logado["nome"]:
+                print(">> Essa consulta não é sua.")
+                return
+            queixa = input("Queixa principal: ").strip()
+            evolucao = input("Evolução clínica: ").strip()
+            prontuarios.append({
+                "paciente": c["paciente"],
+                "medico": c["medico"],
+                "data": c["data"],
+                "queixa": queixa,
+                "evolucao": evolucao
+            })
+            c["status"] = "realizada"
+            print(">> Atendimento registrado no prontuário!")
+            return
+    print(">> Consulta não encontrada.")
 
-def prescrever():
-    print("\n--- PRESCREVER MEDICAMENTO ---")
+def ver_prontuario():
+    print("\n--- PRONTUÁRIO DO PACIENTE ---")
     if len(pacientes) == 0:
         print(">> Nenhum paciente cadastrado.")
         return
@@ -164,15 +248,62 @@ def prescrever():
     if paciente is None:
         print(">> Paciente não encontrado.")
         return
-    medicamento = input("Medicamento: ").strip()
-    if paciente["alergias"] != "" and medicamento.lower() in paciente["alergias"].lower():
-        print("\n>> ALERTA DE ALERGIA!")
-        print(">> O paciente é alérgico a:", paciente["alergias"])
-        print(">> Prescrição NÃO registrada.")
-        return
-    prescricoes.append({"paciente": paciente["nome"], "medicamento": medicamento})
-    print(">> Prescrição registrada com sucesso!")
+    print("\n=== PRONTUÁRIO DE", paciente["nome"], "===")
+    encontrou = False
+    for p in prontuarios:
+        if p["paciente"] == paciente["nome"]:
+            encontrou = True
+            print("\nData:", p["data"], "| Médico:", p["medico"])
+            print("  Queixa:", p["queixa"])
+            print("  Evolução:", p["evolucao"])
+    if not encontrou:
+        print(">> Nenhum atendimento registrado.")
+    print("\n--- Prescrições ---")
+    for pr in prescricoes:
+        if pr["paciente"] == paciente["nome"]:
+            print("  ", pr["medicamento"], "|", pr["dose"], "|", pr["frequencia"], "|", pr["duracao"])
+    print("\n--- Exames ---")
+    for e in exames:
+        if e["paciente"] == paciente["nome"]:
+            print("  ", e["tipo"], "| status:", e["status"], "| resultado:", e["resultado"] if e["resultado"] != "" else "pendente")
 
+def prescrever():
+    print("\n--- PRESCREVER MEDICAMENTOS ---")
+    if len(pacientes) == 0:
+        print(">> Nenhum paciente cadastrado.")
+        return
+    listar_pacientes()
+    codigo = input("Código do paciente: ").strip()
+    paciente = achar_paciente(codigo)
+    if paciente is None:
+        print(">> Paciente não encontrado.")
+        return
+    while True:
+        print("\nMedicamento", len(prescricoes) + 1, "(Enter vazio para encerrar)")
+        medicamento = input("Medicamento: ").strip()
+        if medicamento == "":
+            break
+        if paciente["alergias"] != "" and medicamento.lower() in paciente["alergias"].lower():
+            print("\n>> ALERTA DE ALERGIA! Paciente é alérgico a:", paciente["alergias"])
+            print("1 - Substituir medicamento")
+            print("2 - Descartar esta prescrição")
+            op = input("Opção: ").strip()
+            if op == "1":
+                continue
+            else:
+                print(">> Medicamento descartado.")
+                continue
+        dose = input("Dose: ").strip()
+        frequencia = input("Frequência: ").strip()
+        duracao = input("Duração: ").strip()
+        prescricoes.append({
+            "paciente": paciente["nome"],
+            "medicamento": medicamento,
+            "dose": dose,
+            "frequencia": frequencia,
+            "duracao": duracao
+        })
+        print(">> Prescrição registrada!")
 
 def listar_prescricoes():
     print("\n--- LISTA DE PRESCRIÇÕES ---")
@@ -180,8 +311,60 @@ def listar_prescricoes():
         print(">> Nenhuma prescrição registrada.")
         return
     for p in prescricoes:
-        print("Paciente:", p["paciente"], "-> Medicamento:", p["medicamento"])
+        print(p["paciente"], "->", p["medicamento"], "|", p["dose"], "|", p["frequencia"], "|", p["duracao"])
 
+def solicitar_exame():
+    print("\n--- SOLICITAR EXAME ---")
+    if len(pacientes) == 0:
+        print(">> Nenhum paciente cadastrado.")
+        return
+    listar_pacientes()
+    codigo = input("Código do paciente: ").strip()
+    paciente = achar_paciente(codigo)
+    if paciente is None:
+        print(">> Paciente não encontrado.")
+        return
+    tipo = input("Tipo de exame: ").strip()
+    if tipo == "":
+        print(">> Informe o tipo de exame!")
+        return
+    exames.append({
+        "id": len(exames) + 1,
+        "paciente": paciente["nome"],
+        "tipo": tipo,
+        "status": "solicitado",
+        "resultado": ""
+    })
+    print(">> Exame solicitado! Código:", len(exames))
+
+def registrar_resultado_exame():
+    print("\n--- REGISTRAR RESULTADO DE EXAME ---")
+    pendentes = []
+    for e in exames:
+        if e["status"] == "solicitado":
+            pendentes.append(e)
+    if len(pendentes) == 0:
+        print(">> Nenhum exame pendente.")
+        return
+    for e in pendentes:
+        print("Código:", e["id"], "|", e["paciente"], "|", e["tipo"])
+    codigo = input("Código do exame: ").strip()
+    for e in pendentes:
+        if str(e["id"]) == codigo:
+            resultado = input("Resultado: ").strip()
+            e["resultado"] = resultado
+            e["status"] = "concluido"
+            print(">> Resultado registrado no prontuário!")
+            return
+    print(">> Exame não encontrado.")
+
+def listar_exames():
+    print("\n--- LISTA DE EXAMES ---")
+    if len(exames) == 0:
+        print(">> Nenhum exame solicitado.")
+        return
+    for e in exames:
+        print("Código:", e["id"], "|", e["paciente"], "|", e["tipo"], "| status:", e["status"], "| resultado:", e["resultado"] if e["resultado"] != "" else "pendente")
 
 def cadastrar_leito():
     print("\n--- CADASTRAR LEITO ---")
@@ -193,7 +376,6 @@ def cadastrar_leito():
     leitos.append({"id": len(leitos) + 1, "setor": setor, "numero": numero, "status": "disponivel"})
     print(">> Leito cadastrado! Código:", len(leitos))
 
-
 def listar_leitos():
     print("\n--- LISTA DE LEITOS ---")
     if len(leitos) == 0:
@@ -201,7 +383,6 @@ def listar_leitos():
         return
     for l in leitos:
         print("Código:", l["id"], "| Setor:", l["setor"], "| Número:", l["numero"], "| Status:", l["status"])
-
 
 def internar():
     print("\n--- INTERNAR PACIENTE ---")
@@ -237,7 +418,6 @@ def internar():
             return
     print(">> Leito inválido ou já ocupado.")
 
-
 def dar_alta():
     print("\n--- DAR ALTA ---")
     ativas = []
@@ -260,7 +440,6 @@ def dar_alta():
             print(">> Alta registrada. Leito liberado.")
             return
     print(">> Internação não encontrada.")
-
 
 def menu_administrador():
     while True:
@@ -287,7 +466,6 @@ def menu_administrador():
         else:
             print(">> Opção inválida.")
 
-
 def menu_recepcionista():
     while True:
         print("\n=== MENU RECEPCIONISTA ===")
@@ -295,7 +473,8 @@ def menu_recepcionista():
         print("2 - Listar pacientes")
         print("3 - Agendar consulta")
         print("4 - Listar consultas")
-        print("5 - Cancelar consulta")
+        print("5 - Confirmar consulta")
+        print("6 - Cancelar consulta")
         print("0 - Sair")
         op = input("Opção: ").strip()
         if op == "1":
@@ -307,6 +486,8 @@ def menu_recepcionista():
         elif op == "4":
             listar_consultas()
         elif op == "5":
+            confirmar_consulta()
+        elif op == "6":
             cancelar_consulta()
         elif op == "0":
             print(">> Você saiu da conta.")
@@ -314,15 +495,19 @@ def menu_recepcionista():
         else:
             print(">> Opção inválida.")
 
-
 def menu_medico():
     while True:
         print("\n=== MENU MÉDICO ===")
         print("1 - Listar pacientes")
         print("2 - Agendar consulta")
         print("3 - Listar consultas")
-        print("4 - Prescrever medicamento")
-        print("5 - Listar prescrições")
+        print("4 - Registrar atendimento")
+        print("5 - Ver prontuário")
+        print("6 - Prescrever medicamentos")
+        print("7 - Listar prescrições")
+        print("8 - Solicitar exame")
+        print("9 - Registrar resultado de exame")
+        print("10 - Listar exames")
         print("0 - Sair")
         op = input("Opção: ").strip()
         if op == "1":
@@ -332,15 +517,24 @@ def menu_medico():
         elif op == "3":
             listar_consultas()
         elif op == "4":
-            prescrever()
+            registrar_atendimento()
         elif op == "5":
+            ver_prontuario()
+        elif op == "6":
+            prescrever()
+        elif op == "7":
             listar_prescricoes()
+        elif op == "8":
+            solicitar_exame()
+        elif op == "9":
+            registrar_resultado_exame()
+        elif op == "10":
+            listar_exames()
         elif op == "0":
             print(">> Você saiu da conta.")
             break
         else:
             print(">> Opção inválida.")
-
 
 def menu_enfermeiro():
     while True:
@@ -349,6 +543,8 @@ def menu_enfermeiro():
         print("2 - Listar leitos")
         print("3 - Internar paciente")
         print("4 - Dar alta")
+        print("5 - Ver prontuário")
+        print("6 - Listar exames")
         print("0 - Sair")
         op = input("Opção: ").strip()
         if op == "1":
@@ -359,6 +555,10 @@ def menu_enfermeiro():
             internar()
         elif op == "4":
             dar_alta()
+        elif op == "5":
+            ver_prontuario()
+        elif op == "6":
+            listar_exames()
         elif op == "0":
             print(">> Você saiu da conta.")
             break
