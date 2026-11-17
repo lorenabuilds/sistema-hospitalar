@@ -97,15 +97,18 @@ Na primeira execução, o sistema solicita o cadastro do **primeiro usuário**, 
 ## 📂 Estrutura do repositório
 
 ```
-sistema-hospitalar/
-├── docs/
-│   ├── diagramas/
-│   ├── documentacao.pdf/
-│   └── requisitos/
-└── src/
-    ├── README.md
-    └── Sistema Hospitalar.py
-```
+sistema-hospitalar/  
+│
+├── 📁 docs/
+│   ├── 📁 diagramas/
+│   ├── 📁 documentacao.pdf/
+│   └── 📁 requisitos/
+│
+├── 📁 src/
+│   └── 🐍 Sistema Hospitalar.py
+│
+└── 📄 README.md 
+```    
 
 ---
 
