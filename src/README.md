@@ -127,6 +127,7 @@ O projeto usa **Conventional Commits**:
 feat: adiciona cadastro de paciente
 docs: adiciona diagrama de casos de uso ao repositório
 chore: configura ambiente do projeto
+refactor: separa regras de agendamento em função própria
 ```
 
 ---
