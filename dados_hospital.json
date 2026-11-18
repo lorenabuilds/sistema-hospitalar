@@ -1,0 +1,30 @@
+{
+  "usuarios": [
+    {
+      "nome": "Lorena Aparecida",
+      "login": "lorenaal1",
+      "senha_hash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "perfil": "administrador",
+      "ativo": true,
+      "especialidade": "",
+      "registro": "",
+      "setor": ""
+    }
+  ],
+  "pacientes": [],
+  "consultas": [],
+  "leitos": [],
+  "internacoes": [],
+  "prescricoes": [],
+  "prontuarios": [],
+  "exames": [],
+  "estoque": [],
+  "logs": [
+    {
+      "usuario": "sistema",
+      "acao": "CADASTRAR_USUARIO",
+      "detalhe": "login=lorenaal1, perfil=administrador",
+      "data_hora": "18/11/2026 20:21:08"
+    }
+  ]
+}
